@@ -13,7 +13,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.8'  # Adjust the version if needed
+        python-version: '3.8'
 
     - name: Install dependencies
       run: |
@@ -25,17 +25,17 @@ jobs:
       id: benchmark
       run: |
         result=$(python3 benchmark.py)
-        echo "::set-output name=mrps::$(echo $result | cut -d ' ' -f 1)"
-        echo "::set-output name=wr::$(echo $result | cut -d ' ' -f 2)"
+        echo "mrps=$(echo $result | cut -d ' ' -f 1)" >> $GITHUB_ENV
+        echo "wr=$(echo $result | cut -d ' ' -f 2)" >> $GITHUB_ENV
 
     - name: Show results
       run: |
-        echo "Mean Reward per Step: ${{ steps.benchmark.outputs.mrps }}"
-        echo "Win Ratio: ${{ steps.benchmark.outputs.wr }}"
+        echo "Mean Reward per Step: ${{ env.mrps }}"
+        echo "Win Ratio: ${{ env.wr }}"
 
     - name: Send results
       env:
         GITLAB_USER_LOGIN: ${{ secrets.GITLAB_USER_LOGIN }}
         CI_JOB_URL: ${{ github.event.workflow_run.html_url }}
       run: |
-        curl -d "username=$GITLAB_USER_LOGIN&mean_reward_per_step=${{ steps.benchmark.outputs.mrps }}&win_ratio=${{ steps.benchmark.outputs.wr }}&url=$CI_JOB_URL" https://joan.th-deg.de/ranking-dashboard
+        curl --insecure -d "username=$GITLAB_USER_LOGIN&mean_reward_per_step=${{ env.mrps }}&win_ratio=${{ env.wr }}&url=$CI_JOB_URL" https://joan.th-deg.de/ranking-dashboard
